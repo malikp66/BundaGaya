@@ -1,3 +1,160 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 240 10% 3.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 3.9%;
+        --primary: 346 77% 50%;
+        --primary-foreground: 355 100% 97%;
+        --secondary: 240 4.8% 95.9%;
+        --secondary-foreground: 240 5.9% 10%;
+        --muted: 240 4.8% 95.9%;
+        --muted-foreground: 240 3.8% 46.1%;
+        --accent: 240 4.8% 95.9%;
+        --accent-foreground: 240 5.9% 10%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 5.9% 90%;
+        --input: 240 5.9% 90%;
+        --ring: 346 77% 50%;
+        --radius: 0.5rem;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-gray-200;
+    }
+    body {
+        @apply bg-white text-gray-900 antialiased;
+    }
+}
+
+@layer utilities {
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    @keyframes fade-out {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+    @keyframes zoom-in {
+        from {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    @keyframes zoom-out {
+        from {
+            transform: scale(1);
+            opacity: 1;
+        }
+        to {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+    }
+    @keyframes slide-in-from-top {
+        from {
+            transform: translateY(-0.5rem);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+    @keyframes slide-in-from-bottom {
+        from {
+            transform: translateY(0.5rem);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+    @keyframes slide-in-from-left {
+        from {
+            transform: translateX(-0.5rem);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    @keyframes slide-in-from-right {
+        from {
+            transform: translateX(0.5rem);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    @keyframes pulse {
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .animate-in {
+        animation-duration: 200ms;
+        animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+        animation-fill-mode: forwards;
+    }
+    .animate-out {
+        animation-duration: 150ms;
+        animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+        animation-fill-mode: forwards;
+    }
+
+    .fade-in-0 {
+        animation-name: fade-in;
+    }
+    .fade-out-0 {
+        animation-name: fade-out;
+    }
+    .zoom-in-95 {
+        animation-name: zoom-in;
+    }
+    .zoom-out-95 {
+        animation-name: zoom-out;
+    }
+    .slide-in-from-top-2 {
+        animation-name: slide-in-from-top;
+    }
+    .slide-in-from-bottom-2 {
+        animation-name: slide-in-from-bottom;
+    }
+    .slide-in-from-left-2 {
+        animation-name: slide-in-from-left;
+    }
+    .slide-in-from-right-2 {
+        animation-name: slide-in-from-right;
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    .pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+}

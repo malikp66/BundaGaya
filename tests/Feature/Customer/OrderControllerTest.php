@@ -8,7 +8,6 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
-use App\Models\Shop;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,7 +18,7 @@ class OrderControllerTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
-    protected $shop;
+    protected $consignor;
     protected $product;
 
     protected function setUp(): void
@@ -33,18 +32,13 @@ class OrderControllerTest extends TestCase
         ]);
         
         $this->user = User::factory()->create(['role' => 'customer']);
-        $shopOwner = User::factory()->create(['role' => 'shop_owner']);
-        $this->shop = Shop::factory()->create([
-            'user_id' => $shopOwner->id,
-            'status' => 'active',
-            'commission_rate' => 10,
-        ]);
+        $this->consignor = User::factory()->create(['role' => 'consignor']);
         
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
         
         $this->product = Product::factory()->create([
-            'shop_id' => $this->shop->id,
+            'user_id' => $this->consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'price_per_day' => 100000,
@@ -113,6 +107,11 @@ class OrderControllerTest extends TestCase
                 'address' => 'Test Address 123',
                 'phone' => '081234567890',
                 'notes' => 'Test notes',
+                'customer_name' => 'Test Customer',
+                'return_date' => '2026-07-01',
+                'refund_bank_name' => 'BCA',
+                'refund_bank_account' => '1234567890',
+                'refund_bank_holder' => 'Test Customer',
             ]);
 
         $response->assertRedirect();
@@ -129,12 +128,19 @@ class OrderControllerTest extends TestCase
 
     public function test_cannot_checkout_with_empty_cart()
     {
+        $this->withoutExceptionHandling();
+
         $this->expectException(\App\Exceptions\CartEmptyException::class);
-        
+
         $this->actingAs($this->user)
             ->post(route('customer.checkout'), [
                 'address' => 'Test Address 123',
                 'phone' => '081234567890',
+                'customer_name' => 'Test Customer',
+                'return_date' => '2026-07-01',
+                'refund_bank_name' => 'BCA',
+                'refund_bank_account' => '1234567890',
+                'refund_bank_holder' => 'Test Customer',
             ]);
     }
 
@@ -173,6 +179,11 @@ class OrderControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->post(route('customer.checkout'), [
                 'phone' => '081234567890',
+                'customer_name' => 'Test Customer',
+                'return_date' => '2026-07-01',
+                'refund_bank_name' => 'BCA',
+                'refund_bank_account' => '1234567890',
+                'refund_bank_holder' => 'Test Customer',
             ]);
 
         $response->assertSessionHasErrors('address');
@@ -185,6 +196,11 @@ class OrderControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->post(route('customer.checkout'), [
                 'address' => 'Test Address',
+                'customer_name' => 'Test Customer',
+                'return_date' => '2026-07-01',
+                'refund_bank_name' => 'BCA',
+                'refund_bank_account' => '1234567890',
+                'refund_bank_holder' => 'Test Customer',
             ]);
 
         $response->assertSessionHasErrors('phone');

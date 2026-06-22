@@ -41,8 +41,8 @@ class TransactionResource extends Resource
                             ->searchable()
                             ->preload()
                             ->disabled(),
-                        Forms\Components\Select::make('shop_id')
-                            ->relationship('shop', 'name')
+                        Forms\Components\Select::make('user_id')
+                            ->relationship('user', 'name')
                             ->required()
                             ->searchable()
                             ->preload()
@@ -97,7 +97,7 @@ class TransactionResource extends Resource
                 Tables\Columns\TextColumn::make('order.order_number')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('shop.name')
+                Tables\Columns\TextColumn::make('user.name')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')

@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Brand;
 use App\Models\Category;
-use App\Models\Shop;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -15,7 +14,6 @@ class ProductFactory extends Factory
         $name = fake()->unique()->words(3, true) . ' ' . fake()->colorName();
 
         return [
-            'shop_id' => Shop::factory(),
             'category_id' => Category::factory(),
             'brand_id' => Brand::factory(),
             'name' => $name,

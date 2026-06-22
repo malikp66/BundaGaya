@@ -13,7 +13,7 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
-        'shop_id',
+        'consignor_id',
         'quantity',
         'start_date',
         'end_date',
@@ -23,6 +23,8 @@ class OrderItem extends Model
         'commission_rate',
         'commission_fee',
         'net_amount',
+        'dp_amount',
+        'dp_percentage',
         'status',
     ];
 
@@ -36,6 +38,8 @@ class OrderItem extends Model
             'commission_rate' => 'decimal:2',
             'commission_fee' => 'decimal:2',
             'net_amount' => 'decimal:2',
+            'dp_amount' => 'decimal:2',
+            'dp_percentage' => 'decimal:2',
         ];
     }
 
@@ -49,9 +53,9 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function shop(): BelongsTo
+    public function consignor(): BelongsTo
     {
-        return $this->belongsTo(Shop::class);
+        return $this->belongsTo(User::class, 'consignor_id');
     }
 
     public function transaction(): \Illuminate\Database\Eloquent\Relations\HasOne

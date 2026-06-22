@@ -15,12 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\EnsureGuestSession::class,
         ]);
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdminRole::class,
-            'shop_owner' => \App\Http\Middleware\EnsureShopOwner::class,
-            'customer_or_shop_owner' => \App\Http\Middleware\EnsureCustomerOrShopOwner::class,
+            'guest.session' => \App\Http\Middleware\EnsureGuestSession::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'payment/callback',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

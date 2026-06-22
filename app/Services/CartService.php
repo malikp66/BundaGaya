@@ -104,25 +104,20 @@ class CartService
     public function getCartSummary(User $user): array
     {
         $cart = $this->getOrCreateCart($user);
-        $items = $cart->items()->with('product.shop')->get();
+        $items = $cart->items()->with('product')->get();
 
-        $groupedByShop = $items->groupBy(fn ($item) => $item->product->shop_id);
-
-        $shops = [];
-        foreach ($groupedByShop as $shopId => $shopItems) {
-            $shop = $shopItems->first()->product->shop;
-            $shops[] = [
-                'shop' => $shop,
-                'items' => $shopItems,
-                'subtotal' => $shopItems->sum('subtotal'),
-            ];
+        foreach ($items as $item) {
+            $dpPercentage = $item->product->dp_percentage ?? $this->commissionService->getDefaultDPPercentage();
+            $item->dp_amount = round($item->subtotal * ($dpPercentage / 100), 2);
         }
 
         return [
             'cart' => $cart,
-            'shops' => $shops,
+            'items' => $items,
             'total_items' => $items->sum('quantity'),
             'total' => $items->sum('subtotal'),
+            'dp_total' => $items->sum('dp_amount'),
+            'admin_fee' => $this->commissionService->getAdminFee(),
         ];
     }
 

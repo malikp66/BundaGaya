@@ -14,8 +14,6 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-
-
     public static function getNavigationGroup(): string
     {
         return 'Product Management';
@@ -23,7 +21,7 @@ class ProductResource extends Resource
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-users';
+        return 'heroicon-o-cube';
     }
 
     public static function form(Schema $schema): Schema
@@ -32,11 +30,6 @@ class ProductResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Product Information')
                     ->schema([
-                        Forms\Components\Select::make('shop_id')
-                            ->relationship('shop', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload(),
                         Forms\Components\Select::make('category_id')
                             ->relationship('category', 'name')
                             ->required()
@@ -81,6 +74,54 @@ class ProductResource extends Resource
                             ->default('draft'),
                         Forms\Components\Toggle::make('is_featured')
                             ->default(false),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Consignment Info')
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Consignor')
+                            ->relationship('consignor', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
+                        Forms\Components\TextInput::make('suggested_price')
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->minValue(0)
+                            ->nullable()
+                            ->helperText('Price suggested by consignor'),
+                        Forms\Components\TextInput::make('dp_percentage')
+                            ->numeric()
+                            ->suffix('%')
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->default(20)
+                            ->helperText('Security deposit percentage of rental price'),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Shipping Dimensions')
+                    ->schema([
+                        Forms\Components\TextInput::make('weight')
+                            ->numeric()
+                            ->suffix('gram')
+                            ->minValue(0)
+                            ->nullable()
+                            ->helperText('Weight in grams'),
+                        Forms\Components\TextInput::make('length')
+                            ->numeric()
+                            ->suffix('cm')
+                            ->minValue(0)
+                            ->nullable(),
+                        Forms\Components\TextInput::make('width')
+                            ->numeric()
+                            ->suffix('cm')
+                            ->minValue(0)
+                            ->nullable(),
+                        Forms\Components\TextInput::make('height')
+                            ->numeric()
+                            ->suffix('cm')
+                            ->minValue(0)
+                            ->nullable(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Product Details')
@@ -146,9 +187,6 @@ class ProductResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->limit(30),
-                Tables\Columns\TextColumn::make('shop.name')
-                    ->searchable()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->searchable()
                     ->sortable(),
@@ -156,11 +194,26 @@ class ProductResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('consignor.name')
+                    ->label('Consignor')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('price_per_day')
                     ->money('IDR')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('suggested_price')
+                    ->money('IDR')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Sug. Price'),
                 Tables\Columns\TextColumn::make('stock')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('dp_percentage')
+                    ->suffix('%')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('DP %'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -202,6 +255,11 @@ class ProductResource extends Resource
                     ->preload(),
                 Tables\Filters\TernaryFilter::make('is_featured')
                     ->label('Featured'),
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label('Consignor')
+                    ->relationship('consignor', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -228,7 +286,3 @@ class ProductResource extends Resource
         ];
     }
 }
-
-
-
-

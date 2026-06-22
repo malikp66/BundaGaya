@@ -8,15 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
+        'display_name',
         'email',
         'password',
         'phone',
@@ -24,6 +26,8 @@ class User extends Authenticatable
         'address',
         'role',
         'is_active',
+        'is_guest',
+        'last_active_at',
         'notification_preference',
     ];
 
@@ -38,12 +42,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_guest' => 'boolean',
+            'last_active_at' => 'datetime',
         ];
-    }
-
-    public function shop(): HasOne
-    {
-        return $this->hasOne(Shop::class);
     }
 
     public function orders(): HasMany
@@ -66,9 +67,24 @@ class User extends Authenticatable
         return $this->hasMany(Withdrawal::class);
     }
 
-    public function isShopOwner(): bool
+    public function consignedProducts(): HasMany
     {
-        return $this->role === 'shop_owner';
+        return $this->hasMany(Product::class, 'user_id');
+    }
+
+    public function consignorBalance(): HasOne
+    {
+        return $this->hasOne(ConsignorBalance::class);
+    }
+
+    public function consignorPayouts(): HasMany
+    {
+        return $this->hasMany(ConsignorPayout::class);
+    }
+
+    public function hasConsignedProducts(): bool
+    {
+        return $this->consignedProducts()->exists();
     }
 
     public function isAdmin(): bool
@@ -78,7 +94,33 @@ class User extends Authenticatable
 
     public function isCustomer(): bool
     {
-        return $this->role === 'customer';
+        return $this->role === 'customer' || $this->is_guest;
+    }
+
+    public function isGuest(): bool
+    {
+        return (bool) $this->is_guest;
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        if (!empty($this->attributes['display_name'])) {
+            return $this->attributes['display_name'];
+        }
+
+        if (!empty($this->attributes['name'])) {
+            return $this->attributes['name'];
+        }
+
+        return 'Guest #' . strtoupper(Str::random(4));
+    }
+
+    /**
+     * Generate a stable, human-friendly guest label (e.g. "Guest #A7K2").
+     */
+    public static function generateGuestLabel(): string
+    {
+        return 'Guest #' . strtoupper(Str::random(4));
     }
 
     /**
@@ -88,14 +130,14 @@ class User extends Authenticatable
      */
     public function getWhatsAppPhoneAttribute(): string
     {
-        $phone = preg_replace('/[^0-9]/', '', $this->phone);
-        
+        $phone = preg_replace('/[^0-9]/', '', $this->phone ?? '');
+
         if (str_starts_with($phone, '0')) {
             $phone = '62' . substr($phone, 1);
         } elseif (str_starts_with($phone, '8')) {
             $phone = '62' . $phone;
         }
-        
+
         return $phone;
     }
 

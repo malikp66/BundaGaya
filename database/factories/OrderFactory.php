@@ -14,6 +14,7 @@ class OrderFactory extends Factory
 
         return [
             'user_id' => User::factory(),
+            'customer_name' => fake()->name(),
             'order_number' => 'BG-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6)),
             'status' => 'pending_payment',
             'subtotal' => $subtotal,
@@ -23,6 +24,11 @@ class OrderFactory extends Factory
             'address' => fake()->address(),
             'phone' => fake()->phoneNumber(),
             'notes' => fake()->optional()->sentence(),
+            'return_date' => now()->addDays(3)->format('Y-m-d'),
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => fake()->numerify('#############'),
+            'refund_bank_holder' => fake()->name(),
+            'dp_status' => 'pending',
         ];
     }
 

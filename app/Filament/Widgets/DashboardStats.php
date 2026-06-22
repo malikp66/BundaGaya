@@ -4,7 +4,6 @@ namespace App\Filament\Widgets;
 
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Shop;
 use App\Models\Transaction;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -25,11 +24,6 @@ class DashboardStats extends BaseWidget
                 ->description('Registered users')
                 ->descriptionIcon('heroicon-m-users')
                 ->color('primary'),
-
-            Stat::make('Total Shops', Shop::count())
-                ->description(Shop::where('status', 'active')->count() . ' active shops')
-                ->descriptionIcon('heroicon-m-building-storefront')
-                ->color('success'),
 
             Stat::make('Total Products', Product::count())
                 ->description(Product::where('status', 'active')->count() . ' active products')

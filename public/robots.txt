@@ -1,2 +1,14 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /customer/
+Disallow: /shop/
+Disallow: /payment/callback
+Disallow: /forgot-password
+Disallow: /reset-password/
+Disallow: /verify-email/
+
+Sitemap: {{ config('app.url') }}/sitemap.xml

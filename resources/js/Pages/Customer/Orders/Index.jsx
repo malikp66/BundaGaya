@@ -17,8 +17,8 @@ export default function Index({ orders, filters }) {
         const colors = {
             pending_payment: 'bg-yellow-100 text-yellow-800',
             paid: 'bg-blue-100 text-blue-800',
-            confirmed_by_owner: 'bg-indigo-100 text-indigo-800',
-            picked_up: 'bg-purple-100 text-purple-800',
+            processing: 'bg-indigo-100 text-indigo-800',
+            shipped: 'bg-purple-100 text-purple-800',
             in_use: 'bg-pink-100 text-pink-800',
             returned: 'bg-orange-100 text-orange-800',
             completed: 'bg-green-100 text-green-800',
@@ -29,25 +29,25 @@ export default function Index({ orders, filters }) {
 
     const getStatusLabel = (status) => {
         const labels = {
-            pending_payment: 'Pending Payment',
-            paid: 'Paid',
-            confirmed_by_owner: 'Confirmed',
-            picked_up: 'Picked Up',
-            in_use: 'In Use',
-            returned: 'Returned',
-            completed: 'Completed',
-            cancelled: 'Cancelled',
+            pending_payment: 'Menunggu Pembayaran',
+            paid: 'Dibayar',
+            processing: 'Diproses',
+            shipped: 'Dikirim',
+            in_use: 'Digunakan',
+            returned: 'Dikembalikan',
+            completed: 'Selesai',
+            cancelled: 'Dibatalkan',
         };
         return labels[status] || status;
     };
 
     return (
         <CustomerLayout>
-            <Head title="My Orders" />
-            
+            <Head title="Pesanan Saya" />
+
             <div className="px-4 py-6">
                 <div className="mx-auto max-w-4xl">
-                    <h1 className="mb-6 text-2xl font-bold text-gray-900">My Orders</h1>
+                    <h1 className="mb-6 text-2xl font-bold text-gray-900">Pesanan Saya</h1>
 
                     <div className="mb-6 flex flex-wrap gap-2">
                         <button
@@ -56,9 +56,9 @@ export default function Index({ orders, filters }) {
                                 !selectedStatus ? 'bg-rose-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
                             }`}
                         >
-                            All
+                            Semua
                         </button>
-                        {['pending_payment', 'paid', 'completed', 'cancelled'].map((status) => (
+                        {['pending_payment', 'paid', 'processing', 'shipped', 'in_use', 'returned', 'completed', 'cancelled'].map((status) => (
                             <button
                                 key={status}
                                 onClick={() => handleFilterChange(status)}
@@ -76,12 +76,12 @@ export default function Index({ orders, filters }) {
                             <svg className="mx-auto mb-4 h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
-                            <p className="mb-4 text-gray-600">No orders found</p>
+                            <p className="mb-4 text-gray-600">Belum ada pesanan</p>
                             <Link
                                 href={route('products.index')}
                                 className="inline-block rounded-lg bg-rose-600 px-6 py-2 text-white hover:bg-rose-700"
                             >
-                                Start Shopping
+                                Mulai Belanja
                             </Link>
                         </div>
                     ) : (
@@ -122,21 +122,21 @@ export default function Index({ orders, filters }) {
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className="text-sm font-medium text-gray-900">{item.product?.name}</p>
-                                                    <p className="text-xs text-gray-500">{item.days} days</p>
+                                                    <p className="text-xs text-gray-500">{item.days} hari</p>
                                                 </div>
                                             </div>
                                         ))}
                                         {order.items?.length > 2 && (
-                                            <p className="text-xs text-gray-500">+{order.items.length - 2} more items</p>
+                                            <p className="text-xs text-gray-500">+{order.items.length - 2} barang lainnya</p>
                                         )}
                                     </div>
 
                                     <div className="flex items-center justify-between border-t pt-3">
                                         <p className="text-sm text-gray-600">
-                                            {order.items?.length || 0} items
+                                            {order.items?.length || 0} barang
                                         </p>
                                         <p className="text-lg font-bold text-rose-600">
-                                            Rp {parseInt(order.total).toLocaleString('id-ID')}
+                                            Rp {parseInt(order.grand_total ?? order.total).toLocaleString('id-ID')}
                                         </p>
                                     </div>
                                 </Link>

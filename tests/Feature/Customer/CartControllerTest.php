@@ -5,7 +5,6 @@ namespace Tests\Feature\Customer;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Shop;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +15,7 @@ class CartControllerTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
-    protected $shop;
+    protected $consignor;
     protected $product;
 
     protected function setUp(): void
@@ -24,17 +23,13 @@ class CartControllerTest extends TestCase
         parent::setUp();
         
         $this->user = User::factory()->create(['role' => 'customer']);
-        $shopOwner = User::factory()->create(['role' => 'shop_owner']);
-        $this->shop = Shop::factory()->create([
-            'user_id' => $shopOwner->id,
-            'status' => 'active',
-        ]);
+        $this->consignor = User::factory()->create(['role' => 'consignor']);
         
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
         
         $this->product = Product::factory()->create([
-            'shop_id' => $this->shop->id,
+            'user_id' => $this->consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'price_per_day' => 100000,

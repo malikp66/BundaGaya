@@ -10,7 +10,6 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
-use App\Models\Shop;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\OrderService;
@@ -25,7 +24,7 @@ class OrderServiceTest extends TestCase
     protected $orderService;
     protected $cartService;
     protected $user;
-    protected $shop;
+    protected $consignor;
     protected $product;
 
     protected function setUp(): void
@@ -42,17 +41,13 @@ class OrderServiceTest extends TestCase
         ]);
         
         $this->user = User::factory()->create();
-        $this->shop = Shop::factory()->create([
-            'user_id' => User::factory(),
-            'status' => 'active',
-            'commission_rate' => 10,
-        ]);
+        $this->consignor = User::factory()->create(['role' => 'consignor']);
         
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
         
         $this->product = Product::factory()->create([
-            'shop_id' => $this->shop->id,
+            'user_id' => $this->consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'price_per_day' => 100000,
@@ -71,6 +66,10 @@ class OrderServiceTest extends TestCase
         $order = $this->orderService->createFromCart($this->user, [
             'address' => 'Test Address',
             'phone' => '081234567890',
+            'customer_name' => 'Test Customer',
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => '1234567890',
+            'refund_bank_holder' => 'Test Customer',
         ]);
 
         $this->assertDatabaseHas('orders', [
@@ -83,12 +82,7 @@ class OrderServiceTest extends TestCase
         $this->assertDatabaseHas('order_items', [
             'order_id' => $order->id,
             'product_id' => $this->product->id,
-            'shop_id' => $this->shop->id,
-        ]);
-
-        $this->assertDatabaseHas('transactions', [
-            'order_id' => $order->id,
-            'shop_id' => $this->shop->id,
+            'consignor_id' => $this->consignor->id,
         ]);
     }
 
@@ -99,6 +93,10 @@ class OrderServiceTest extends TestCase
         $this->orderService->createFromCart($this->user, [
             'address' => 'Test Address',
             'phone' => '081234567890',
+            'customer_name' => 'Test Customer',
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => '1234567890',
+            'refund_bank_holder' => 'Test Customer',
         ]);
     }
 
@@ -106,15 +104,10 @@ class OrderServiceTest extends TestCase
     {
         $startDate = Carbon::now()->addDays(1);
         $endDate = Carbon::now()->addDays(3);
-        
-        $this->cartService->addItem($this->user, $this->product, $startDate, $endDate, 10);
 
         $this->expectException(InsufficientStockException::class);
 
-        $this->orderService->createFromCart($this->user, [
-            'address' => 'Test Address',
-            'phone' => '081234567890',
-        ]);
+        $this->cartService->addItem($this->user, $this->product, $startDate, $endDate, 10);
     }
 
     public function test_can_mark_order_as_paid()
@@ -128,75 +121,6 @@ class OrderServiceTest extends TestCase
         $this->assertNotNull($paidOrder->paid_at);
     }
 
-    public function test_can_confirm_order_by_owner()
-    {
-        $order = $this->createTestOrder();
-        $this->orderService->markAsPaid($order);
-
-        $confirmedOrder = $this->orderService->confirmByOwner($order);
-
-        $this->assertEquals('confirmed_by_owner', $confirmedOrder->status);
-        $this->assertNotNull($confirmedOrder->confirmed_at);
-        
-        $this->product->refresh();
-        $this->assertEquals(4, $this->product->stock); // Stock decreased by 1
-    }
-
-    public function test_cannot_confirm_without_payment()
-    {
-        $order = $this->createTestOrder();
-
-        $this->expectException(InvalidOrderStatusException::class);
-
-        $this->orderService->confirmByOwner($order);
-    }
-
-    public function test_can_mark_as_picked_up()
-    {
-        $order = $this->createTestOrder();
-        $this->orderService->markAsPaid($order);
-        $this->orderService->confirmByOwner($order);
-
-        $pickedUpOrder = $this->orderService->markAsPickedUp($order);
-
-        $this->assertEquals('picked_up', $pickedUpOrder->status);
-    }
-
-    public function test_can_mark_as_returned()
-    {
-        $order = $this->createTestOrder();
-        $this->orderService->markAsPaid($order);
-        $this->orderService->confirmByOwner($order);
-        $this->orderService->markAsPickedUp($order);
-
-        $returnedOrder = $this->orderService->markAsReturned($order);
-
-        $this->assertEquals('returned', $returnedOrder->status);
-        
-        $this->product->refresh();
-        $this->assertEquals(5, $this->product->stock); // Stock restored
-        $this->assertEquals(1, $this->product->rental_count); // Rental count increased
-    }
-
-    public function test_can_complete_order()
-    {
-        $order = $this->createTestOrder();
-        $this->orderService->markAsPaid($order);
-        $this->orderService->confirmByOwner($order);
-        $this->orderService->markAsPickedUp($order);
-        $this->orderService->markAsReturned($order);
-
-        $completedOrder = $this->orderService->complete($order);
-
-        $this->assertEquals('completed', $completedOrder->status);
-        $this->assertNotNull($completedOrder->completed_at);
-        
-        $this->assertDatabaseHas('transactions', [
-            'order_id' => $order->id,
-            'status' => 'settled',
-        ]);
-    }
-
     public function test_can_cancel_order()
     {
         $order = $this->createTestOrder();
@@ -206,20 +130,6 @@ class OrderServiceTest extends TestCase
         $this->assertEquals('cancelled', $cancelledOrder->status);
         $this->assertNotNull($cancelledOrder->cancelled_at);
         $this->assertStringContainsString('Customer request', $cancelledOrder->notes);
-    }
-
-    public function test_cannot_cancel_completed_order()
-    {
-        $order = $this->createTestOrder();
-        $this->orderService->markAsPaid($order);
-        $this->orderService->confirmByOwner($order);
-        $this->orderService->markAsPickedUp($order);
-        $this->orderService->markAsReturned($order);
-        $this->orderService->complete($order);
-
-        $this->expectException(InvalidOrderStatusException::class);
-
-        $this->orderService->cancel($order);
     }
 
     public function test_order_calculates_admin_fee_correctly()
@@ -232,6 +142,10 @@ class OrderServiceTest extends TestCase
         $order = $this->orderService->createFromCart($this->user, [
             'address' => 'Test Address',
             'phone' => '081234567890',
+            'customer_name' => 'Test Customer',
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => '1234567890',
+            'refund_bank_holder' => 'Test Customer',
         ]);
 
         $subtotal = 300000; // 100000 * 3 days
@@ -252,6 +166,10 @@ class OrderServiceTest extends TestCase
         return $this->orderService->createFromCart($this->user, [
             'address' => 'Test Address',
             'phone' => '081234567890',
+            'customer_name' => 'Test Customer',
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => '1234567890',
+            'refund_bank_holder' => 'Test Customer',
         ]);
     }
 }

@@ -1,17 +1,12 @@
 <?php
 
+use App\Http\Controllers\Customer\AccountController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\Customer\ProductController as CustomerProductController;
 use App\Http\Controllers\Customer\ReviewController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Shop\DashboardController;
-use App\Http\Controllers\Shop\OrderController as ShopOrderController;
-use App\Http\Controllers\Shop\ProductController as ShopProductController;
-use App\Http\Controllers\Shop\ShopController;
-use App\Http\Controllers\Shop\TransactionController;
-use App\Http\Controllers\Shop\WithdrawalController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\Customer\ShippingRateController;
+use App\Http\Controllers\PaymentCallbackController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -20,38 +15,36 @@ Route::get('/', function () {
         ->whereNull('parent_id')
         ->limit(8)
         ->get();
-    
+
     $featuredProducts = \App\Models\Product::where('status', 'active')
         ->where('is_featured', true)
-        ->with(['shop', 'category', 'brand', 'primaryPhoto'])
+        ->with(['category', 'brand', 'primaryPhoto'])
         ->limit(8)
         ->get();
-    
+
     return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
+        'laravelVersion' => \Illuminate\Foundation\Application::VERSION,
         'phpVersion' => PHP_VERSION,
         'categories' => $categories,
         'featuredProducts' => $featuredProducts,
+        'seo' => [
+            'title' => 'BundaGaya - Sewa Baju Kondangan Branded',
+            'description' => 'Sewa baju kondangan branded dengan harga terjangkau. Gaun pesta, kebaya modern, tas Myzasac, dan aksesoris lengkap. Mulai Rp 50.000/hari.',
+            'og_image' => null,
+            'og_type' => 'website',
+        ],
     ]);
-});
+})->name('welcome');
 
 Route::get('/products', [CustomerProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [CustomerProductController::class, 'show'])->name('products.show');
-Route::get('/shops/{shop:slug}', [ShopController::class, 'show'])->name('shops.show');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+Route::prefix('account')->name('account.')->group(function () {
+    Route::get('/', [AccountController::class, 'show'])->name('show');
+    Route::patch('/', [AccountController::class, 'update'])->name('update');
 });
 
-Route::middleware(['auth', 'customer_or_shop_owner'])->prefix('customer')->name('customer.')->group(function () {
+Route::prefix('customer')->name('customer.')->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/{itemId}', [CartController::class, 'update'])->name('cart.update');
@@ -64,28 +57,33 @@ Route::middleware(['auth', 'customer_or_shop_owner'])->prefix('customer')->name(
     Route::post('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->name('orders.cancel');
 
     Route::post('/orders/{order}/review', [ReviewController::class, 'store'])->name('reviews.store');
+
+    Route::post('/shipping/rates', [ShippingRateController::class, 'getRates'])->name('shipping.rates');
 });
 
-Route::middleware(['auth', 'shop_owner'])->prefix('shop')->name('shop.')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/sitemap.xml', function () {
+    $products = \App\Models\Product::where('status', 'active')
+        ->select('slug', 'updated_at')
+        ->get();
 
-    Route::get('/shop/create', [ShopController::class, 'create'])->name('shop.create');
-    Route::post('/shop', [ShopController::class, 'store'])->name('shop.store');
+    $content = '<?xml version="1.0" encoding="UTF-8"?>';
+    $content .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 
-    Route::resource('/products', ShopProductController::class);
+    $content .= '<url><loc>' . url('/') . '</loc><changefreq>daily</changefreq><priority>1.0</priority></url>';
+    $content .= '<url><loc>' . route('products.index') . '</loc><changefreq>daily</changefreq><priority>0.9</priority></url>';
 
-    Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
-    Route::get('/orders/{order}', [ShopOrderController::class, 'show'])->name('orders.show');
-    Route::post('/orders/{order}/confirm', [ShopOrderController::class, 'confirm'])->name('orders.confirm');
-    Route::post('/orders/{order}/picked-up', [ShopOrderController::class, 'markPickedUp'])->name('orders.picked-up');
-    Route::post('/orders/{order}/returned', [ShopOrderController::class, 'markReturned'])->name('orders.returned');
+    foreach ($products as $product) {
+        $content .= '<url>';
+        $content .= '<loc>' . route('products.show', $product->slug) . '</loc>';
+        $content .= '<lastmod>' . $product->updated_at->toW3cString() . '</lastmod>';
+        $content .= '<changefreq>weekly</changefreq>';
+        $content .= '<priority>0.8</priority>';
+        $content .= '</url>';
+    }
 
-    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+    $content .= '</urlset>';
 
-    Route::get('/withdrawals', [WithdrawalController::class, 'index'])->name('withdrawals.index');
-    Route::post('/withdrawals', [WithdrawalController::class, 'store'])->name('withdrawals.store');
+    return response($content, 200)->header('Content-Type', 'application/xml');
 });
 
-Route::post('/payment/callback', [\App\Http\Controllers\PaymentCallbackController::class, 'handle'])->name('payment.callback');
-
-require __DIR__.'/auth.php';
+Route::post('/payment/callback', [PaymentCallbackController::class, 'handle'])->name('payment.callback');

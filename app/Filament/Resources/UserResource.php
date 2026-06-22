@@ -53,7 +53,6 @@ class UserResource extends Resource
                         Forms\Components\Select::make('role')
                             ->options([
                                 'customer' => 'Customer',
-                                'shop_owner' => 'Shop Owner',
                                 'admin' => 'Admin',
                             ])
                             ->required()
@@ -96,7 +95,6 @@ class UserResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'admin' => 'danger',
-                        'shop_owner' => 'warning',
                         'customer' => 'success',
                         default => 'gray',
                     }),
@@ -111,7 +109,6 @@ class UserResource extends Resource
                 Tables\Filters\SelectFilter::make('role')
                     ->options([
                         'customer' => 'Customer',
-                        'shop_owner' => 'Shop Owner',
                         'admin' => 'Admin',
                     ]),
                 Tables\Filters\TernaryFilter::make('is_active')

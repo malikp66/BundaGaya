@@ -5,7 +5,6 @@ namespace Tests\Unit\Services;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Shop;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\CommissionService;
@@ -18,7 +17,7 @@ class CartServiceTest extends TestCase
 
     protected $cartService;
     protected $user;
-    protected $shop;
+    protected $consignor;
     protected $product;
 
     protected function setUp(): void
@@ -28,12 +27,12 @@ class CartServiceTest extends TestCase
         $this->cartService = app(CartService::class);
         
         $this->user = User::factory()->create();
-        $this->shop = Shop::factory()->create(['user_id' => $this->user->id, 'status' => 'active']);
+        $this->consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
         
         $this->product = Product::factory()->create([
-            'shop_id' => $this->shop->id,
+            'user_id' => $this->consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'price_per_day' => 100000,
@@ -116,7 +115,7 @@ class CartServiceTest extends TestCase
         $this->cartService->addItem($this->user, $this->product, $startDate, $endDate, 1);
         
         $product2 = Product::factory()->create([
-            'shop_id' => $this->shop->id,
+            'user_id' => $this->consignor->id,
             'category_id' => Category::factory(),
             'brand_id' => Brand::factory(),
             'price_per_day' => 150000,
@@ -157,7 +156,7 @@ class CartServiceTest extends TestCase
         $summary = $this->cartService->getCartSummary($this->user);
 
         $this->assertArrayHasKey('cart', $summary);
-        $this->assertArrayHasKey('shops', $summary);
+        $this->assertArrayHasKey('items', $summary);
         $this->assertArrayHasKey('total', $summary);
         $this->assertArrayHasKey('total_items', $summary);
         $this->assertEquals(2, $summary['total_items']);

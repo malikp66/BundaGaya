@@ -15,7 +15,7 @@ class Transaction extends Model
         'transaction_id',
         'order_id',
         'order_item_id',
-        'shop_id',
+        'user_id',
         'amount',
         'commission_rate',
         'commission_fee',
@@ -63,9 +63,9 @@ class Transaction extends Model
         return $this->belongsTo(OrderItem::class);
     }
 
-    public function shop(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Shop::class);
+        return $this->belongsTo(User::class);
     }
 
     public function scopePending($query)

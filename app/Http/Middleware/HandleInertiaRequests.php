@@ -7,32 +7,41 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that is loaded on the first page visit.
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determine the current asset version.
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'display_name' => $user->display_name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'address' => $user->address,
+                    'is_guest' => (bool) $user->is_guest,
+                    'role' => $user->role,
+                ] : null,
+            ],
+            'app' => [
+                'name' => config('app.name', 'BundaGaya'),
+                'description' => 'Sewa baju kondangan branded dengan harga terjangkau. Gaun pesta, kebaya, tas Myzasac, dan aksesoris lengkap.',
+                'url' => config('app.url'),
+            ],
+            'seo' => [
+                'title' => null,
+                'description' => null,
+                'og_image' => null,
+                'og_type' => 'website',
             ],
         ];
     }

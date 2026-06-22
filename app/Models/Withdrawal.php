@@ -13,7 +13,6 @@ class Withdrawal extends Model
 
     protected $fillable = [
         'withdrawal_number',
-        'shop_id',
         'user_id',
         'amount',
         'bank_name',
@@ -52,11 +51,6 @@ class Withdrawal extends Model
         $random = strtoupper(Str::random(6));
 
         return "{$prefix}-{$date}-{$random}";
-    }
-
-    public function shop(): BelongsTo
-    {
-        return $this->belongsTo(Shop::class);
     }
 
     public function user(): BelongsTo

@@ -181,56 +181,10 @@ class WhatsAppService
         $message .= "💰 Jumlah: *Rp " . number_format($payment->amount, 0, ',', '.') . "*\n";
         $message .= "💳 Metode: " . ucfirst(str_replace('_', ' ', $payment->method)) . "\n";
         $message .= "📅 Tanggal: " . $payment->paid_at->format('d M Y, H:i') . "\n\n";
-        $message .= "Pesanan Anda sedang diproses oleh pemilik toko.\n\n";
+        $message .= "Pesanan Anda sedang diproses oleh tim BundaGaya.\n\n";
         $message .= "Terima kasih! 🙏";
 
         return $this->sendMessage($order->user->phone, $message);
-    }
-
-    /**
-     * Send shop approved notification
-     *
-     * @param \App\Models\Shop $shop
-     * @return array
-     */
-    public function sendShopApprovedNotification($shop): array
-    {
-        $message = "🎊 *Selamat! Toko Anda Disetujui*\n\n";
-        $message .= "Halo {$shop->user->name},\n\n";
-        $message .= "Toko Anda telah disetujui:\n";
-        $message .= "🏪 Nama Toko: *{$shop->name}*\n";
-        $message .= "📌 Status: *Aktif*\n\n";
-        $message .= "Anda sekarang dapat:\n";
-        $message .= "✅ Menambahkan produk\n";
-        $message .= "✅ Menerima pesanan\n";
-        $message .= "✅ Mengelola transaksi\n\n";
-        $message .= "Yuk mulai jualan di BundaGaya! 🚀";
-
-        return $this->sendMessage($shop->user->phone, $message);
-    }
-
-    /**
-     * Send shop rejected notification
-     *
-     * @param \App\Models\Shop $shop
-     * @return array
-     */
-    public function sendShopRejectedNotification($shop): array
-    {
-        $message = "😔 *Pendaftaran Toko Ditolak*\n\n";
-        $message .= "Halo {$shop->user->name},\n\n";
-        $message .= "Mohon maaf, pendaftaran toko Anda belum dapat disetujui.\n\n";
-        $message .= "🏪 Nama Toko: *{$shop->name}*\n";
-        $message .= "📌 Status: *Ditolak*\n\n";
-        
-        if ($shop->rejection_reason) {
-            $message .= "📝 Alasan:\n{$shop->rejection_reason}\n\n";
-        }
-        
-        $message .= "Anda dapat memperbaiki dan mengajukan kembali.\n\n";
-        $message .= "Jika ada pertanyaan, hubungi kami di support@bundagaya.com";
-
-        return $this->sendMessage($shop->user->phone, $message);
     }
 
     /**
@@ -278,6 +232,54 @@ class WhatsAppService
         return $this->sendMessage($withdrawal->user->phone, $message);
     }
 
+    public function sendPayoutRequestNotification($payout): array
+    {
+        $message = "📋 *Permintaan Penarikan Saldo*\n\n";
+        $message .= "Halo {$payout->user->name},\n\n";
+        $message .= "Permintaan penarikan saldo Anda telah diajukan:\n";
+        $message .= "📋 No. Penarikan: *{$payout->payout_number}*\n";
+        $message .= "💰 Jumlah: *Rp " . number_format($payout->amount, 0, ',', '.') . "*\n";
+        $message .= "🏦 Bank: {$payout->bank_name}\n";
+        $message .= "💳 No. Rekening: {$payout->bank_account_number}\n\n";
+        $message .= "Permintaan akan diproses oleh tim BundaGaya.\n\n";
+        $message .= "Terima kasih! 🙏";
+
+        return $this->sendMessage($payout->user->phone, $message);
+    }
+
+    public function sendPayoutApprovedNotification($payout): array
+    {
+        $message = "✅ *Penarikan Saldo Disetujui*\n\n";
+        $message .= "Halo {$payout->user->name},\n\n";
+        $message .= "Permintaan penarikan saldo Anda telah disetujui:\n";
+        $message .= "📋 No. Penarikan: *{$payout->payout_number}*\n";
+        $message .= "💰 Jumlah: *Rp " . number_format($payout->amount, 0, ',', '.') . "*\n";
+        $message .= "🏦 Bank: {$payout->bank_name}\n";
+        $message .= "💳 No. Rekening: {$payout->bank_account_number}\n\n";
+        $message .= "Dana akan ditransfer ke rekening Anda.\n\n";
+        $message .= "Terima kasih! 🙏";
+
+        return $this->sendMessage($payout->user->phone, $message);
+    }
+
+    public function sendPayoutRejectedNotification($payout): array
+    {
+        $message = "❌ *Penarikan Saldo Ditolak*\n\n";
+        $message .= "Halo {$payout->user->name},\n\n";
+        $message .= "Mohon maaf, permintaan penarikan saldo Anda ditolak:\n";
+        $message .= "📋 No. Penarikan: *{$payout->payout_number}*\n";
+        $message .= "💰 Jumlah: *Rp " . number_format($payout->amount, 0, ',', '.') . "*\n\n";
+
+        if ($payout->notes) {
+            $message .= "📝 Alasan:\n{$payout->notes}\n\n";
+        }
+
+        $message .= "Saldo tetap tersedia di akun Anda.\n\n";
+        $message .= "Jika ada pertanyaan, hubungi kami di support@bundagaya.com";
+
+        return $this->sendMessage($payout->user->phone, $message);
+    }
+
     /**
      * Get emoji for order status
      *
@@ -289,8 +291,8 @@ class WhatsAppService
         return match($status) {
             'pending_payment' => '⏳',
             'paid' => '✅',
-            'confirmed_by_owner' => '📦',
-            'picked_up' => '🚚',
+            'processing' => "📦",
+            'shipped' => '🚚',
             'in_use' => '👗',
             'returned' => '↩️',
             'completed' => '🎉',
@@ -308,9 +310,9 @@ class WhatsAppService
     private function getStatusMessage(string $status): string
     {
         return match($status) {
-            'paid' => "Pembayaran telah dikonfirmasi. Pesanan sedang diproses oleh pemilik toko.",
-            'confirmed_by_owner' => "Pemilik toko telah mengkonfirmasi pesanan Anda. Silakan ambil produk sesuai jadwal.",
-            'picked_up' => "Produk telah berhasil diambil. Selamat menikmati!",
+            'paid' => "Pembayaran telah dikonfirmasi. Pesanan sedang diproses oleh tim BundaGaya.",
+            'processing' => "Pesanan Anda sedang diproses dan akan segera dikirim.",
+            'shipped' => "Produk telah dikirim. Silakan pantau status pengiriman di aplikasi.",
             'returned' => "Produk telah dikembalikan. Terima kasih!",
             'completed' => "Pesanan telah selesai. Terima kasih telah menggunakan BundaGaya!",
             'cancelled' => "Pesanan telah dibatalkan. Dana akan dikembalikan.",

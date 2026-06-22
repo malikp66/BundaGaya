@@ -6,7 +6,6 @@ use App\Exceptions\InsufficientStockException;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Shop;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\CommissionService;
@@ -29,12 +28,12 @@ class StockRaceConditionTest extends TestCase
     public function test_stock_validation_prevents_negative_stock()
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
         
         $product = Product::factory()->create([
-            'shop_id' => $shop->id,
+            'user_id' => $consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'stock' => 1,
@@ -58,12 +57,12 @@ class StockRaceConditionTest extends TestCase
     public function test_stock_decrement_with_locking()
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
         
         $product = Product::factory()->create([
-            'shop_id' => $shop->id,
+            'user_id' => $consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'stock' => 2,
@@ -82,10 +81,14 @@ class StockRaceConditionTest extends TestCase
         $order = $orderService->createFromCart($user, [
             'address' => 'Test Address',
             'phone' => '081234567890',
+            'customer_name' => 'Test Customer',
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => '1234567890',
+            'refund_bank_holder' => 'Test Customer',
         ]);
 
         $orderService->markAsPaid($order);
-        $orderService->confirmByOwner($order);
+        $orderService->markAsProcessing($order);
 
         $product->refresh();
         $this->assertEquals(1, $product->stock);
@@ -94,12 +97,12 @@ class StockRaceConditionTest extends TestCase
     public function test_insufficient_stock_exception_on_confirm()
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
         
         $product = Product::factory()->create([
-            'shop_id' => $shop->id,
+            'user_id' => $consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'stock' => 1,
@@ -118,6 +121,10 @@ class StockRaceConditionTest extends TestCase
         $order = $orderService->createFromCart($user, [
             'address' => 'Test Address',
             'phone' => '081234567890',
+            'customer_name' => 'Test Customer',
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => '1234567890',
+            'refund_bank_holder' => 'Test Customer',
         ]);
 
         $orderService->markAsPaid($order);
@@ -125,6 +132,6 @@ class StockRaceConditionTest extends TestCase
         $product->update(['stock' => 0]);
 
         $this->expectException(InsufficientStockException::class);
-        $orderService->confirmByOwner($order);
+        $orderService->markAsProcessing($order);
     }
 }

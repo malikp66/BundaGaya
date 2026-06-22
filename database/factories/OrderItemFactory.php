@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Shop;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OrderItemFactory extends Factory
@@ -21,7 +20,6 @@ class OrderItemFactory extends Factory
         return [
             'order_id' => Order::factory(),
             'product_id' => Product::factory(),
-            'shop_id' => Shop::factory(),
             'quantity' => $quantity,
             'start_date' => fake()->dateTimeBetween('+1 week', '+1 month')->format('Y-m-d'),
             'end_date' => fake()->dateTimeBetween('+1 week +1 day', '+1 month +7 days')->format('Y-m-d'),

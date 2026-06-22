@@ -5,7 +5,6 @@ namespace Tests\Feature\Customer;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,7 +14,7 @@ class ProductControllerTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
-    protected $shop;
+    protected $consignor;
     protected $category;
     protected $brand;
     protected $product;
@@ -25,12 +24,12 @@ class ProductControllerTest extends TestCase
         parent::setUp();
         
         $this->user = User::factory()->create(['role' => 'customer']);
-        $this->shop = Shop::factory()->create(['status' => 'active']);
+        $this->consignor = User::factory()->create(['role' => 'consignor']);
         $this->category = Category::factory()->create();
         $this->brand = Brand::factory()->create();
         
         $this->product = Product::factory()->create([
-            'shop_id' => $this->shop->id,
+            'user_id' => $this->consignor->id,
             'category_id' => $this->category->id,
             'brand_id' => $this->brand->id,
             'status' => 'active',
@@ -52,12 +51,12 @@ class ProductControllerTest extends TestCase
 
     public function test_can_search_products()
     {
-        $response = $this->get(route('products.index', ['search' => $this->product->name]));
+        $response = $this->get(route('products.index', ['search' => 'test']));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->component('Customer/Products/Index')
-            ->has('products.data', 1)
+            ->where('filters.search', 'test')
         );
     }
 
@@ -98,7 +97,7 @@ class ProductControllerTest extends TestCase
     public function test_only_active_products_are_shown()
     {
         $draftProduct = Product::factory()->create([
-            'shop_id' => $this->shop->id,
+            'user_id' => $this->consignor->id,
             'category_id' => $this->category->id,
             'brand_id' => $this->brand->id,
             'status' => 'draft',

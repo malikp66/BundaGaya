@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\Shop;
 use App\Models\Withdrawal;
+use App\Models\ConsignorPayout;
 use Illuminate\Support\Facades\Log;
 
 class NotificationService
@@ -60,8 +60,8 @@ class NotificationService
         $statusLabels = [
             'pending_payment' => 'Menunggu Pembayaran',
             'paid' => 'Dibayar',
-            'confirmed_by_owner' => 'Dikonfirmasi Pemilik Toko',
-            'picked_up' => 'Diambil',
+            'processing' => 'Diproses',
+            'shipped' => 'Dikirim',
             'in_use' => 'Sedang Digunakan',
             'returned' => 'Dikembalikan',
             'completed' => 'Selesai',
@@ -106,60 +106,6 @@ class NotificationService
                 'order_id' => $order->id,
                 'user_id' => $order->user_id,
                 'payment_id' => $payment->id,
-                'error' => $result['message'],
-            ]);
-        }
-    }
-
-    /**
-     * Send shop approved notification
-     *
-     * @param Shop $shop
-     * @return void
-     */
-    public function sendShopApprovedNotification(Shop $shop): void
-    {
-        if (!$shop->user->phone) {
-            Log::warning('Cannot send shop approved notification: user has no phone number', [
-                'shop_id' => $shop->id,
-                'user_id' => $shop->user_id,
-            ]);
-            return;
-        }
-
-        $result = $this->whatsappService->sendShopApprovedNotification($shop);
-        
-        if (!$result['success']) {
-            Log::error('Failed to send shop approved notification', [
-                'shop_id' => $shop->id,
-                'user_id' => $shop->user_id,
-                'error' => $result['message'],
-            ]);
-        }
-    }
-
-    /**
-     * Send shop rejected notification
-     *
-     * @param Shop $shop
-     * @return void
-     */
-    public function sendShopRejectedNotification(Shop $shop): void
-    {
-        if (!$shop->user->phone) {
-            Log::warning('Cannot send shop rejected notification: user has no phone number', [
-                'shop_id' => $shop->id,
-                'user_id' => $shop->user_id,
-            ]);
-            return;
-        }
-
-        $result = $this->whatsappService->sendShopRejectedNotification($shop);
-        
-        if (!$result['success']) {
-            Log::error('Failed to send shop rejected notification', [
-                'shop_id' => $shop->id,
-                'user_id' => $shop->user_id,
                 'error' => $result['message'],
             ]);
         }
@@ -214,6 +160,69 @@ class NotificationService
             Log::error('Failed to send withdrawal rejected notification', [
                 'withdrawal_id' => $withdrawal->id,
                 'user_id' => $withdrawal->user_id,
+                'error' => $result['message'],
+            ]);
+        }
+    }
+
+    public function sendPayoutRequestNotification(ConsignorPayout $payout): void
+    {
+        if (!$payout->user->phone) {
+            Log::warning('Cannot send payout request notification: user has no phone number', [
+                'payout_id' => $payout->id,
+                'user_id' => $payout->user_id,
+            ]);
+            return;
+        }
+
+        $result = $this->whatsappService->sendPayoutRequestNotification($payout);
+
+        if (!$result['success']) {
+            Log::error('Failed to send payout request notification', [
+                'payout_id' => $payout->id,
+                'user_id' => $payout->user_id,
+                'error' => $result['message'],
+            ]);
+        }
+    }
+
+    public function sendPayoutApprovedNotification(ConsignorPayout $payout): void
+    {
+        if (!$payout->user->phone) {
+            Log::warning('Cannot send payout approved notification: user has no phone number', [
+                'payout_id' => $payout->id,
+                'user_id' => $payout->user_id,
+            ]);
+            return;
+        }
+
+        $result = $this->whatsappService->sendPayoutApprovedNotification($payout);
+
+        if (!$result['success']) {
+            Log::error('Failed to send payout approved notification', [
+                'payout_id' => $payout->id,
+                'user_id' => $payout->user_id,
+                'error' => $result['message'],
+            ]);
+        }
+    }
+
+    public function sendPayoutRejectedNotification(ConsignorPayout $payout): void
+    {
+        if (!$payout->user->phone) {
+            Log::warning('Cannot send payout rejected notification: user has no phone number', [
+                'payout_id' => $payout->id,
+                'user_id' => $payout->user_id,
+            ]);
+            return;
+        }
+
+        $result = $this->whatsappService->sendPayoutRejectedNotification($payout);
+
+        if (!$result['success']) {
+            Log::error('Failed to send payout rejected notification', [
+                'payout_id' => $payout->id,
+                'user_id' => $payout->user_id,
                 'error' => $result['message'],
             ]);
         }

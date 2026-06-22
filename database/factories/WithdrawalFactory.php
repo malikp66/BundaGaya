@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,7 +11,6 @@ class WithdrawalFactory extends Factory
     {
         return [
             'withdrawal_number' => 'WD-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6)),
-            'shop_id' => Shop::factory(),
             'user_id' => User::factory(),
             'amount' => fake()->numberBetween(500000, 10000000),
             'bank_name' => fake()->randomElement(['BCA', 'BNI', 'BRI', 'Mandiri', 'BSI']),

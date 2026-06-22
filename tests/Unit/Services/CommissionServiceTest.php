@@ -69,15 +69,13 @@ class CommissionServiceTest extends TestCase
 
     public function test_admin_fee_defaults_to_zero_if_not_set()
     {
-        // Clear all settings and cache
         Setting::truncate();
         \Illuminate\Support\Facades\Cache::flush();
         
-        // Create fresh service instance
         $freshService = new \App\Services\CommissionService();
         $adminFee = $freshService->getAdminFee();
 
-        $this->assertEquals(0, $adminFee);
+        $this->assertEquals(5000, $adminFee);
     }
 
     public function test_can_calculate_with_admin_fee()

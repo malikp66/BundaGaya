@@ -15,13 +15,14 @@ class Product extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'shop_id',
         'category_id',
         'brand_id',
+        'user_id',
         'name',
         'slug',
         'description',
         'price_per_day',
+        'suggested_price',
         'stock',
         'size',
         'color',
@@ -29,6 +30,11 @@ class Product extends Model
         'condition',
         'status',
         'is_featured',
+        'dp_percentage',
+        'weight',
+        'length',
+        'width',
+        'height',
         'views_count',
         'rental_count',
         'rating_average',
@@ -39,6 +45,12 @@ class Product extends Model
     {
         return [
             'price_per_day' => 'decimal:2',
+            'suggested_price' => 'decimal:2',
+            'dp_percentage' => 'decimal:2',
+            'weight' => 'decimal:2',
+            'length' => 'decimal:2',
+            'width' => 'decimal:2',
+            'height' => 'decimal:2',
             'is_featured' => 'boolean',
             'rating_average' => 'decimal:2',
         ];
@@ -59,9 +71,9 @@ class Product extends Model
         });
     }
 
-    public function shop(): BelongsTo
+    public function consignor(): BelongsTo
     {
-        return $this->belongsTo(Shop::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function category(): BelongsTo
@@ -139,5 +151,34 @@ class Product extends Model
             'rating_average' => $stats->avg ?? 0,
             'rating_count' => $stats->count ?? 0,
         ]);
+    }
+
+    public function getBookedQuantityForDateRange(string $startDate, string $endDate): int
+    {
+        return (int) OrderItem::where('product_id', $this->id)
+            ->whereHas('order', fn ($q) => $q->whereNotIn('status', [
+                'cancelled', 'completed', 'returned',
+            ]))
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('start_date', [$startDate, $endDate])
+                  ->orWhereBetween('end_date', [$startDate, $endDate])
+                  ->orWhere(fn ($q) => $q->where('start_date', '<=', $startDate)
+                      ->where('end_date', '>=', $endDate));
+            })
+            ->sum('quantity');
+    }
+
+    public function getAvailableQuantityForDateRange(string $startDate, string $endDate): int
+    {
+        if ($this->status !== 'active') {
+            return 0;
+        }
+
+        return max(0, $this->stock - $this->getBookedQuantityForDateRange($startDate, $endDate));
+    }
+
+    public function isAvailableForDateRange(string $startDate, string $endDate, int $quantity = 1): bool
+    {
+        return $this->getAvailableQuantityForDateRange($startDate, $endDate) >= $quantity;
     }
 }

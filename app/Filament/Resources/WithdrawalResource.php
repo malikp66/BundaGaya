@@ -35,12 +35,6 @@ class WithdrawalResource extends Resource
                         Forms\Components\TextInput::make('withdrawal_number')
                             ->disabled()
                             ->dehydrated(false),
-                        Forms\Components\Select::make('shop_id')
-                            ->relationship('shop', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->disabled(),
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
                             ->required()
@@ -99,9 +93,6 @@ class WithdrawalResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                Tables\Columns\TextColumn::make('shop.name')
-                    ->searchable()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Owner')
                     ->searchable()

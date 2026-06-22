@@ -8,7 +8,6 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\Shop;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\OrderService;
@@ -28,10 +27,10 @@ class PaymentIdempotencyTest extends TestCase
         $this->seed(\Database\Seeders\DatabaseSeeder::class);
     }
 
-    private function createOrderWithPayment($user, $shop, $category, $brand)
+    private function createOrderWithPayment($user, $consignor, $category, $brand)
     {
         $product = Product::factory()->create([
-            'shop_id' => $shop->id,
+            'user_id' => $consignor->id,
             'category_id' => $category->id,
             'brand_id' => $brand->id,
             'stock' => 10,
@@ -50,6 +49,10 @@ class PaymentIdempotencyTest extends TestCase
         $order = $orderService->createFromCart($user, [
             'address' => 'Test Address',
             'phone' => '081234567890',
+            'customer_name' => 'Test Customer',
+            'refund_bank_name' => 'BCA',
+            'refund_bank_account' => '1234567890',
+            'refund_bank_holder' => 'Test Customer',
         ]);
 
         $payment = Payment::create([
@@ -66,11 +69,11 @@ class PaymentIdempotencyTest extends TestCase
     public function test_payment_notification_processed_once()
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
 
-        [$order, $payment] = $this->createOrderWithPayment($user, $shop, $category, $brand);
+        [$order, $payment] = $this->createOrderWithPayment($user, $consignor, $category, $brand);
 
         $paymentService = app(PaymentService::class);
 
@@ -101,11 +104,11 @@ class PaymentIdempotencyTest extends TestCase
     public function test_duplicate_payment_notification_does_not_change_status()
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
 
-        [$order, $payment] = $this->createOrderWithPayment($user, $shop, $category, $brand);
+        [$order, $payment] = $this->createOrderWithPayment($user, $consignor, $category, $brand);
 
         $paymentService = app(PaymentService::class);
 
@@ -132,11 +135,11 @@ class PaymentIdempotencyTest extends TestCase
         config(['midtrans.server_key' => 'test-server-key-123']);
         
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
 
-        [$order, $payment] = $this->createOrderWithPayment($user, $shop, $category, $brand);
+        [$order, $payment] = $this->createOrderWithPayment($user, $consignor, $category, $brand);
 
         $paymentService = app(PaymentService::class);
 
@@ -195,11 +198,11 @@ class PaymentIdempotencyTest extends TestCase
     public function test_pending_status_update()
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
 
-        [$order, $payment] = $this->createOrderWithPayment($user, $shop, $category, $brand);
+        [$order, $payment] = $this->createOrderWithPayment($user, $consignor, $category, $brand);
 
         $paymentService = app(PaymentService::class);
 
@@ -220,11 +223,11 @@ class PaymentIdempotencyTest extends TestCase
     public function test_failed_status_update()
     {
         $user = User::factory()->create(['role' => 'customer']);
-        $shop = Shop::factory()->create(['status' => 'active']);
+        $consignor = User::factory()->create(['role' => 'consignor']);
         $category = Category::factory()->create();
         $brand = Brand::factory()->create();
 
-        [$order, $payment] = $this->createOrderWithPayment($user, $shop, $category, $brand);
+        [$order, $payment] = $this->createOrderWithPayment($user, $consignor, $category, $brand);
 
         $paymentService = app(PaymentService::class);
 

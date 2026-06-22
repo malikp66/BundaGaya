@@ -15,21 +15,45 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'customer_name',
+        'instagram',
         'order_number',
         'status',
         'subtotal',
         'commission_fee',
         'admin_fee',
         'total',
+        'dp_total',
+        'shipping_cost',
+        'grand_total',
+        'shipping_courier',
+        'shipping_service',
+        'tracking_number',
+        'shipping_address',
+        'city',
+        'province',
+        'postal_code',
+        'district',
+        'suburb',
+        'return_date',
         'payment_status',
         'payment_method',
         'notes',
         'address',
         'phone',
+        'refund_bank_name',
+        'refund_bank_account',
+        'refund_bank_holder',
         'paid_at',
+        'processed_at',
+        'shipped_at',
         'confirmed_at',
         'completed_at',
         'cancelled_at',
+        'returned_at',
+        'dp_refunded',
+        'dp_deducted',
+        'dp_status',
     ];
 
     protected function casts(): array
@@ -39,10 +63,19 @@ class Order extends Model
             'commission_fee' => 'decimal:2',
             'admin_fee' => 'decimal:2',
             'total' => 'decimal:2',
+            'dp_total' => 'decimal:2',
+            'shipping_cost' => 'decimal:2',
+            'grand_total' => 'decimal:2',
+            'dp_refunded' => 'decimal:2',
+            'dp_deducted' => 'decimal:2',
             'paid_at' => 'datetime',
+            'processed_at' => 'datetime',
+            'shipped_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'returned_at' => 'datetime',
+            'return_date' => 'date',
         ];
     }
 
@@ -127,5 +160,20 @@ class Order extends Model
     public function isCancelled(): bool
     {
         return $this->status === 'cancelled';
+    }
+
+    public function isDpPending(): bool
+    {
+        return $this->dp_status === 'pending';
+    }
+
+    public function isDpTransferred(): bool
+    {
+        return $this->dp_status === 'transferred';
+    }
+
+    public function isDpCompleted(): bool
+    {
+        return $this->dp_status === 'completed';
     }
 }

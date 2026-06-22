@@ -26,9 +26,23 @@ class CommissionService
         return $this->calculate($subtotal, $commissionRate);
     }
 
+    public function calculateWithDP(float $subtotal, float $commissionRate, float $dpPercentage): array
+    {
+        $result = $this->calculate($subtotal, $commissionRate);
+        $result['dp_amount'] = round($subtotal * ($dpPercentage / 100), 2);
+        $result['dp_percentage'] = round($dpPercentage, 2);
+
+        return $result;
+    }
+
     public function getDefaultCommissionRate(): float
     {
-        return (float) config('app.default_commission_rate', 10.00);
+        return config('commission.default_rate', 20.0);
+    }
+
+    public function getDefaultDPPercentage(): float
+    {
+        return (float) config('app.default_dp_percentage', 20.00);
     }
 
     public function getAdminFee(): float
